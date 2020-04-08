@@ -14,6 +14,6 @@ namespace NumberOfActiveDisplays.NativeInterop.Types
         public DISPLAYCONFIG_RATIONAL refreshRate;
         public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
         public bool targetAvailable;
-        public uint statusFlags;
+        public DISPLAYCONFIG_PATH_TARGET_INFO_STATUSFLAGS statusFlags;
     }
 }

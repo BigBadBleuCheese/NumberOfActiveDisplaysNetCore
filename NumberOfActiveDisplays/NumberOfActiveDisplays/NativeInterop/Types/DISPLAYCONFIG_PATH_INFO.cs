@@ -7,6 +7,6 @@ namespace NumberOfActiveDisplays.NativeInterop.Types
     {
         public DISPLAYCONFIG_PATH_SOURCE_INFO sourceInfo;
         public DISPLAYCONFIG_PATH_TARGET_INFO targetInfo;
-        public uint flags;
+        public DISPLAYCONFIG_PATH_INFO_FLAGS flags;
     }
 }

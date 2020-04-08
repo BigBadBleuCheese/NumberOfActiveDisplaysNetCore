@@ -8,6 +8,6 @@ namespace NumberOfActiveDisplays.NativeInterop.Types
         public LUID adapterId;
         public uint id;
         public uint modeInfoIdx;
-        public uint statusFlags;
+        public DISPLAYCONFIG_PATH_SOURCE_INFO_STATUSFLAGS statusFlags;
     }
 }
