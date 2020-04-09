@@ -7,7 +7,13 @@ namespace NumberOfActiveDisplays.NativeInterop
     static class Methods
     {
         [DllImport("user32.dll")]
-        public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName);
+        public static extern ERROR DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_ADAPTER_NAME deviceName);
+
+        [DllImport("user32.dll")]
+        public static extern ERROR DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SOURCE_DEVICE_NAME deviceName);
+
+        [DllImport("user32.dll")]
+        public static extern ERROR DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName);
 
         [DllImport("user32.dll")]
         public static extern ERROR GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS Flags, out uint numPathArrayElements, out uint numModeInfoArrayElements);

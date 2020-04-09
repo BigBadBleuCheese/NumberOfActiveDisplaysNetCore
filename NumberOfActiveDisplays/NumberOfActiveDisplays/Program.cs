@@ -1,13 +1,14 @@
-﻿using static System.Console;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using NumberOfActiveDisplays.NativeInterop;
+using NumberOfActiveDisplays.NativeInterop.Types;
+using System;
+using System.Linq;
+using System.Runtime.InteropServices;
+using static System.Console;
 
 namespace NumberOfActiveDisplays
 {
-    using NativeInterop;
-    using NativeInterop.Types;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
-    using System;
-
     class Program
     {
         static int Main(string[] args)
@@ -46,6 +47,7 @@ namespace NumberOfActiveDisplays
             return mode switch
             {
                 Mode.GetDisplayDetails => GetDisplayDetails(numPathArrayElements, numModeInfoArrayElements),
+                Mode.GetModeDetails => GetModeDetails(numPathArrayElements, numModeInfoArrayElements),
                 _ => CountDisplays(numPathArrayElements)
             };
         }
@@ -56,14 +58,88 @@ namespace NumberOfActiveDisplays
             return ExitCode.Success;
         }
 
+        static DISPLAYCONFIG_ADAPTER_NAME? GetAdapterName(LUID adapterId, uint id)
+        {
+            var deviceName = new DISPLAYCONFIG_ADAPTER_NAME();
+            deviceName.header.adapterId = adapterId;
+            deviceName.header.id = id;
+            deviceName.header.size = (uint)Marshal.SizeOf(typeof(DISPLAYCONFIG_ADAPTER_NAME));
+            deviceName.header.type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
+            var error = Methods.DisplayConfigGetDeviceInfo(ref deviceName);
+            if (error != ERROR.SUCCESS)
+                return null;
+            return deviceName;
+        }
+
         static int GetDisplayDetails(uint numPathArrayElements, uint numModeInfoArrayElements)
         {
-            var pathInfoArray = new DISPLAYCONFIG_PATH_INFO[numPathArrayElements];
-            var modeInfoArray = new DISPLAYCONFIG_MODE_INFO[numModeInfoArrayElements];
+            switch (QueryDisplayConfig(numPathArrayElements, numModeInfoArrayElements, out var pathInfoArray, out _))
+            {
+                case ExitCode.Success:
+                    WriteLine(JsonConvert.SerializeObject(pathInfoArray.Select(pathInfo => new
+                    {
+                        pathInfo,
+                        sourceAdapterName = GetAdapterName(pathInfo.sourceInfo.adapterId, pathInfo.sourceInfo.id),
+                        sourceDeviceName = GetSourceDeviceName(pathInfo.sourceInfo.adapterId, pathInfo.sourceInfo.id),
+                        targetAdapterName = GetAdapterName(pathInfo.targetInfo.adapterId, pathInfo.targetInfo.id),
+                        targetDeviceName = GetTargetDeviceName(pathInfo.targetInfo.adapterId, pathInfo.targetInfo.id)
+                    }), Formatting.Indented, new StringEnumConverter()));
+                    return ExitCode.Success;
+                case int unsuccessfulReturnCode:
+                    return unsuccessfulReturnCode;
+            }
+        }
+
+        static int GetModeDetails(uint numPathArrayElements, uint numModeInfoArrayElements)
+        {
+            switch (QueryDisplayConfig(numPathArrayElements, numModeInfoArrayElements, out _, out var modeInfoArray))
+            {
+                case ExitCode.Success:
+                    WriteLine(JsonConvert.SerializeObject(modeInfoArray.Select(modeInfo => new
+                    {
+                        modeInfo,
+                        targetAdapterName = GetAdapterName(modeInfo.adapterId, modeInfo.id),
+                        targetDeviceName = GetTargetDeviceName(modeInfo.adapterId, modeInfo.id)
+                    }), Formatting.Indented, new StringEnumConverter()));
+                    return ExitCode.Success;
+                case int unsuccessfulReturnCode:
+                    return unsuccessfulReturnCode;
+            }
+        }
+
+        static DISPLAYCONFIG_SOURCE_DEVICE_NAME? GetSourceDeviceName(LUID adapterId, uint id)
+        {
+            var deviceName = new DISPLAYCONFIG_SOURCE_DEVICE_NAME();
+            deviceName.header.adapterId = adapterId;
+            deviceName.header.id = id;
+            deviceName.header.size = (uint)Marshal.SizeOf(typeof(DISPLAYCONFIG_SOURCE_DEVICE_NAME));
+            deviceName.header.type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+            var error = Methods.DisplayConfigGetDeviceInfo(ref deviceName);
+            if (error != ERROR.SUCCESS)
+                return null;
+            return deviceName;
+        }
+
+        static DISPLAYCONFIG_TARGET_DEVICE_NAME? GetTargetDeviceName(LUID adapterId, uint id)
+        {
+            var deviceName = new DISPLAYCONFIG_TARGET_DEVICE_NAME();
+            deviceName.header.adapterId = adapterId;
+            deviceName.header.id = id;
+            deviceName.header.size = (uint)Marshal.SizeOf(typeof(DISPLAYCONFIG_TARGET_DEVICE_NAME));
+            deviceName.header.type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+            var error = Methods.DisplayConfigGetDeviceInfo(ref deviceName);
+            if (error != ERROR.SUCCESS)
+                return null;
+            return deviceName;
+        }
+
+        static int QueryDisplayConfig(uint numPathArrayElements, uint numModeInfoArrayElements, out DISPLAYCONFIG_PATH_INFO[] pathInfoArray, out DISPLAYCONFIG_MODE_INFO[] modeInfoArray)
+        {
+            pathInfoArray = new DISPLAYCONFIG_PATH_INFO[numPathArrayElements];
+            modeInfoArray = new DISPLAYCONFIG_MODE_INFO[numModeInfoArrayElements];
             switch (Methods.QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS, ref numPathArrayElements, pathInfoArray, ref numModeInfoArrayElements, modeInfoArray, IntPtr.Zero))
             {
                 case ERROR.SUCCESS:
-                    WriteLine(JsonConvert.SerializeObject(pathInfoArray, Formatting.Indented, new StringEnumConverter()));
                     return ExitCode.Success;
                 case ERROR.ACCESS_DENIED:
                     Error.WriteLine($"{nameof(Methods.QueryDisplayConfig)} says the I do not have access to the console session");

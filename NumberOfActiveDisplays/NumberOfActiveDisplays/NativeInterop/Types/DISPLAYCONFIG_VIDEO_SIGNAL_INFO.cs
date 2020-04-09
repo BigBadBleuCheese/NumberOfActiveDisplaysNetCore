@@ -10,7 +10,7 @@ namespace NumberOfActiveDisplays.NativeInterop.Types
         public DISPLAYCONFIG_RATIONAL vSyncFreq;
         public DISPLAYCONFIG_2DREGION activeSize;
         public DISPLAYCONFIG_2DREGION totalSize;
-        public uint videoStandard;
+        public DISPLAYCONFIG_VIDEO_SIGNAL_INFO_VIDEOSTANDARD videoStandard;
         public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
     }
 }

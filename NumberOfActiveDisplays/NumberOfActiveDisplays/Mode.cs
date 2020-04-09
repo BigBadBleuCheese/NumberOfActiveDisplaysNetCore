@@ -4,7 +4,9 @@
     {
         CountDisplays,
         GetDisplayDetails,
+        GetModeDetails,
         C = CountDisplays,
-        D = GetDisplayDetails
+        D = GetDisplayDetails,
+        M = GetModeDetails
     }
 }

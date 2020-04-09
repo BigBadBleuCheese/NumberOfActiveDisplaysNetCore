@@ -5,6 +5,6 @@ namespace NumberOfActiveDisplays.NativeInterop.Types
     [StructLayout(LayoutKind.Sequential)]
     struct DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS
     {
-        public uint value;
+        public DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS_VALUE value;
     }
 }
